@@ -245,7 +245,7 @@ if id == 0:
     print("Job completion took", t14-t0, "s for Proc ", id)
     # Save map and plot figure:
     # hp.write_map('../output/kappa-map_websky1lpt_no768_nside'+str(nside)+'_MPI.fits', kappa, dtype=np.float64, overwrite=True)
-    hp.orthview(kappa, rot=[0.,90.,0.], cmap='inferno', half_sky=True, title=r'$\kappa$ map')
+    hp.orthview(kappa, rot=[0.,90.,0.], cmap='inferno', half_sky=False, title=r'$\kappa$ map')
     hp.graticule(ls='-', lw=0.25, c='w')
     plt.savefig('./kappa_small_cube_128.png', bbox_inches='tight', pad_inches=0.1) #../output/kappa_map_fullcube_no768.png
 
