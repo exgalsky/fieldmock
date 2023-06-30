@@ -43,7 +43,6 @@ def fmodulo(v1, v2):
 @partial(jax.jit, static_argnames=['nside'])
 def ang2pix_ring_zphi(nside, z, s, phi):
     za = jnp.abs(z)
-    print(z.shape, s.shape, phi.shape)
     tt = jax.vmap(fmodulo, in_axes=(0, None), out_axes=0)(phi, 2*jnp.pi) * (2. / jnp.pi)
 
     def zt2pix_ring_eq(nside, z, tt):
