@@ -64,9 +64,8 @@ backend.print2log(log, f"Computing LPT to kappa map...", level='usky_info')
 kappa_map = lpt_wsp.lpt2map([sxfile, syfile, szfile], backend, bytes_per_cell=4)
 backend.print2log(log, f"Kappa map computed. Saving to file.", level='usky_info')
 
-
 backend.mpi_backend.writemap2file(kappa_map, kappa_map_filebase+".fits")
-backend.print2log(f"LIGHTCONE: Kappa map saved. Exiting...", level='usky_info')
+backend.print2log(log, f"LIGHTCONE: Kappa map saved. Exiting...", level='usky_info')
 
 
 
