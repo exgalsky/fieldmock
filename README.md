@@ -1,3 +1,3 @@
-# lptmap
+# lightcone
 
-Code to generate LPT fields and observables from ICs
+Generation of sky maps from simulated LSS data on the observer's past light cone 
