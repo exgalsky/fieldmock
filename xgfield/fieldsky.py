@@ -1,15 +1,14 @@
-from xgutil.log_util import parprint
 class FieldSky:
     '''FieldSky'''
     def __init__(self, **kwargs):
 
-        import fieldmock.defaults as fmd
+        import xgfield.defaults as fd
 
-        self.ID    = kwargs.get(   'ID',fmd.ID)
-        self.N     = kwargs.get(    'N',fmd.N)
-        self.Lbox  = kwargs.get( 'Lbox',fmd.Lbox)
-        self.Nside = kwargs.get('Nside',fmd.Nside)
-        self.input = kwargs.get( 'ityp',fmd.input)
+        self.ID    = kwargs.get(   'ID',fd.ID)
+        self.N     = kwargs.get(    'N',fd.N)
+        self.Lbox  = kwargs.get( 'Lbox',fd.Lbox)
+        self.Nside = kwargs.get('Nside',fd.Nside)
+        self.input = kwargs.get( 'ityp',fd.input)
 
         return
 
@@ -21,8 +20,8 @@ class FieldSky:
         import os
         import argparse
         import logging
-        import fieldmock.libfieldmock as lfm
-        import fieldmock.defaults     as fmd
+        import xgfield.libfield as lfm
+        import xgfield.defaults as fmd
         import xgcosmo.cosmology   as cosmo
         import xgutil.backend      as bk
 
@@ -67,7 +66,7 @@ class FieldSky:
         backend.print2log(log, f"Cosmology computed", level='usky_info')
 
         backend.print2log(log, f"Setting up lightcone workspace...", level='usky_info')
-        lpt_wsp = lfm.LibFieldmock(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
+        lpt_wsp = lfm.LibField(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
 
         backend.print2log(log, f"Computing LPT to kappa map...", level='usky_info')
         kappa_map = lpt_wsp.fieldmap([sxfile, syfile, szfile], backend, bytes_per_cell=4)

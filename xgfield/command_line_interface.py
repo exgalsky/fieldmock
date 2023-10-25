@@ -2,14 +2,14 @@ def main():
 
     # for full res websky 1LPT at nside=1024:
     #   export LPT_DISPLACEMENTS_PATH=/pscratch/sd/m/malvarez/websky-displacements/
-    #   srun -n $nproc --gpus-per-task=1 xgfieldmock --N 6144 --Nside 1024 --ityp lptfiles
+    #   srun -n $nproc --gpus-per-task=1 xgfield --N 6144 --Nside 1024 --input lptfiles
 
-    import fieldmock
-    import fieldmock.defaults as fmd
+    import xgfield
+    import xgfield.defaults as fmd
 
     import sys
     import argparse
-    from fieldmock import fieldsky
+    from xgfield import fieldsky
 
     parser = argparse.ArgumentParser(description='Commandline interface to fieldmock')
 

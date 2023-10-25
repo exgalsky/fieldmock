@@ -28,7 +28,7 @@ def _summarizetime(task_tag, times):
             total_time += times[key]
     log.usky_info(f'{task_tag}: {total_time:.5e} all steps')
 
-class LibFieldmock():
+class LibField():
 
 
     def __init__(self, cosmo_workspace, grid_nside, map_nside, box_length_in_Mpc, zmin, zmax):
@@ -65,9 +65,9 @@ class LibFieldmock():
 
         import jax
         import jax.numpy as jnp
-        import fieldmock.jax_healpix as jhp
+        import xgfield.jax_healpix as jhp
         from time import time
-        import fieldmock.kernel_lib  as kl
+        import xgfield.kernel_lib  as kl
 
         tgridmap0 = time()
         overalltimes = {}
