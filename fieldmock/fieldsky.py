@@ -1,28 +1,32 @@
-import numpy as np 
-import xgcosmo.cosmology as cosmo 
-import healpy as hp 
-import liblightcone as llc
-import xgutil.backend as bk
-import os
-import argparse
-import fieldmock.defaults as fmdefaults
-
-import logging
-log = logging.getLogger("LIGHTCONE")
-
+from xgutil.log_util import parprint
 class FieldSky:
     '''FieldSky'''
     def __init__(self, **kwargs):
 
-        self.ID    = kwargs.get(   'ID',fmdefaults.ID)
-        self.N     = kwargs.get(    'N',fmdefaults.N)
-        self.Lbox  = kwargs.get( 'Lbox',fmdefaults.Lbox)
-        self.Nside = kwargs.get('Nside',fmdefaults.Nside)
-        self.ityp  = kwargs.get( 'ityp',fmdefaults.ityp)
+        import fieldmock.defaults as fmd
+
+        self.ID    = kwargs.get(   'ID',fmd.ID)
+        self.N     = kwargs.get(    'N',fmd.N)
+        self.Lbox  = kwargs.get( 'Lbox',fmd.Lbox)
+        self.Nside = kwargs.get('Nside',fmd.Nside)
+        self.input = kwargs.get( 'ityp',fmd.input)
+
+        return
 
     def generate(self, **kwargs):
 
+        from time import time
         times={'t0' : time()}
+
+        import os
+        import argparse
+        import logging
+        import fieldmock.libfieldmock as lfm
+        import fieldmock.defaults     as fmd
+        import xgcosmo.cosmology   as cosmo
+        import xgutil.backend      as bk
+
+        log = logging.getLogger("LIGHTCONE")
 
         grid_nside = self.N # cube shape is parameterized by grid_nside; full resolution for websky is 6144
         map_nside  = self.Nside
@@ -38,7 +42,7 @@ class FieldSky:
 
         kappa_map_filebase = f'./output/kappa_1lpt_grid-{ grid_nside }_nside-{ map_nside }'
 
-        backend = bk.backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu)
+        backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-logging.ERROR)
         backend.print2log(log, f"Backend configuration complete.", level='usky_info')
 
         # Paths to displacement fields
@@ -63,14 +67,16 @@ class FieldSky:
         backend.print2log(log, f"Cosmology computed", level='usky_info')
 
         backend.print2log(log, f"Setting up lightcone workspace...", level='usky_info')
-        lpt_wsp = llc.lightcone_workspace(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
+        lpt_wsp = lfm.LibFieldmock(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
 
         backend.print2log(log, f"Computing LPT to kappa map...", level='usky_info')
-        kappa_map = lpt_wsp.lpt2map([sxfile, syfile, szfile], backend, bytes_per_cell=4)
+        kappa_map = lpt_wsp.fieldmap([sxfile, syfile, szfile], backend, bytes_per_cell=4)
         backend.print2log(log, f"Kappa map computed. Saving to file.", level='usky_info')
 
         backend.mpi_backend.writemap2file(kappa_map, kappa_map_filebase+".fits")
         backend.print2log(log, f"LIGHTCONE: Kappa map saved. Exiting...", level='usky_info')
+
+        return 0
 
 
 
