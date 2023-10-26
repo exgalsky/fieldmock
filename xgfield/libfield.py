@@ -30,7 +30,6 @@ def _summarizetime(task_tag, times):
 
 class LibField():
 
-
     def __init__(self, cosmo_workspace, grid_nside, map_nside, box_length_in_Mpc, zmin, zmax):
         import healpy as hp
         import jax
@@ -188,7 +187,7 @@ class LibField():
 
         return skymap
     
-    def fieldmap(self, dispfilenames, backend, bytes_per_cell=4, use_tqdm=False):        #kernel_list,
+    def fieldmap(self, displacements, backend, bytes_per_cell=4, use_tqdm=False):        #kernel_list,
 
         import jax
         import jax.numpy as jnp
@@ -204,6 +203,15 @@ class LibField():
         obs_map = np.zeros((self.npix,))
         task_tag = backend.jax_backend.task_tag
         iterator = jax_iterator
+
+        if displacements['type'] == 'arraylist':
+            sx = displacements['data'][0]
+            sy = displacements['data'][1]
+            sz = displacements['data'][2]
+            # for array list of displacements, domain decomposition already done (currently with jax sharding)
+            # redefine the iterator to one element containing stop and start in global array
+            iterator = [{'start' : displacements['start'], 'stop' : displacements['stop'], 'offset' : None, 'shape' : None}]
+
         if use_tqdm:
             from tqdm import tqdm
             iterator = tqdm(jax_iterator, ncols=120)
@@ -212,14 +220,19 @@ class LibField():
             n=len(iterator)
         for iter in iterator:
 
-            log.usky_debug(f"start, stop, offset, shape: { iter }", per_task=True)
+            log.usky_debug(f"{ iter }", per_task=True)
+
+            start  = iter['start']
+            stop   = iter['stop']
+            offset = iter['offset']
+            shape  = iter['shape']
 
             if not use_tqdm:
                 t1=time()
-
-            sx = _read_displacement(dispfilenames[0], iter[3], iter[2])
-            sy = _read_displacement(dispfilenames[1], iter[3], iter[2])
-            sz = _read_displacement(dispfilenames[2], iter[3], iter[2])
+            if displacements['type'] == 'filelist':
+                sx = _read_displacement(displacements['data'][0], shape, offset)
+                sy = _read_displacement(displacements['data'][1], shape, offset)
+                sz = _read_displacement(displacements['data'][2], shape, offset)
 
             if not use_tqdm:
                 t2=time()
@@ -229,7 +242,7 @@ class LibField():
             sx = jnp.asarray(sx) ; sy = jnp.asarray(sy) ; sz = jnp.asarray(sz)
             times = _profiletime(task_tag, 'numpy to jax sx, sy, sz', times)
 
-            obs_map_cur = self.grid2map(sx, sy, sz, iter[0], iter[1], 0, self.grid_nside, 0, self.grid_nside, backend=backend)
+            obs_map_cur = self.grid2map(sx, sy, sz, start, stop, 0, self.grid_nside, 0, self.grid_nside, backend=backend)
             times = _profiletime(task_tag, 'grid2map in fieldmap', times)
 
             obs_map_cur = np.array(obs_map_cur, dtype=np.float32)
