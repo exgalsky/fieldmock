@@ -16,9 +16,24 @@ Mocks can be generated through the command line interface on a login node in ser
 % module load xgsmenv
 % export LPT_DISPLACEMENTS_PATH=/pscratch/sd/m/malvarez/websky-displacements/
 % mkdir -p output 
-% xgfield fieldsky-test-768-lptfiles --N 768 --Nside 1024 --no-gpu --no-mpi # reading from external LPT field
-% python xgfield/scripts/example.py fieldsky-test-768-cube                  # passes in same field via cube object
-% stat -c "%n,%s" output/kappa_fieldsky-test-768-* | column -t -s,
-output/kappa_fieldsky-test-768-cube-768_nside-1024.fits      100670400
-output/kappa_fieldsky-test-768-lptfiles-768_nside-1024.fits  100670400
+
+% script=xgfield/scripts/cube_example.py
+% cubecoms="python $script"
+% filecoms="xgfield"
+% $filecomp="srun -n 4 --gpus-per-task=1 $filecoms"
+% $cubecomp="srun -n 4 --gpus-per-task=1 $cubecoms"
+%
+% $filecoms fieldsky-test-files --no-mpi # displacements from external file processed in serial
+% $cubecoms fieldsky-test-cubes   serial # displacements from external cube processed in serial
+% $filecomp fieldsky-test-filep          # displacements from external cube processed in parallel
+% $cubecomp fieldsky-test-cubep parallel # displacements from external cube processed in parallel
+
+% stat -c "%n,%s" output/kappa_fieldsky-test-* | column -t -s,
+output/kappa_fieldsky-test-cubep-768_nside-1024.fits  100670400
+output/kappa_fieldsky-test-cubes-768_nside-1024.fits  100670400
+output/kappa_fieldsky-test-filep-768_nside-1024.fits  100670400
+output/kappa_fieldsky-test-files-768_nside-1024.fits  100670400
+
+% fitsdiff -q -a 1e-5 output/kappa_fieldsky-test-files-768_nside-1024.fits output/kappa_fieldsky-test-cubep-768_nside-1024.fits ; echo $?
+0
 ```

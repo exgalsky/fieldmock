@@ -32,28 +32,42 @@ class FieldSky:
 
         import xgfield.defaults as fd
 
-        self.ID    = kwargs.get(    'ID',fd.ID)
-        self.N     = kwargs.get(     'N',fd.N)
-        self.Lbox  = kwargs.get(  'Lbox',fd.Lbox)
-        self.Nside = kwargs.get( 'Nside',fd.Nside)
-        self.input = kwargs.get( 'input',fd.input)
-        self.gpu   = kwargs.get(   'gpu',fd.gpu)
-        self.mpi   = kwargs.get(   'mpi',fd.mpi)
+        self.ID     = kwargs.get(     'ID',fd.ID)
+        self.N      = kwargs.get(      'N',fd.N)
+        self.Lbox   = kwargs.get(   'Lbox',fd.Lbox)
+        self.Nside  = kwargs.get(  'Nside',fd.Nside)
+        self.input  = kwargs.get(  'input',fd.input)
+        self.gpu    = kwargs.get(    'gpu',fd.gpu)
+        self.mpi    = kwargs.get(    'mpi',fd.mpi)
+        self.loglev = kwargs.get( 'loglev',fd.loglev)
 
-        self.nproc  = kwargs.get( 'nproc',1)
-        self.rank   = kwargs.get(  'rank',0)
-        self.cube   = kwargs.get(  'cube')
-
+        self.cube  = kwargs.get(  'cube')
         if self.cube is not None:
             self.input = 'cube'
             self.N    = self.cube.N
             self.Lbox = self.cube.Lbox
 
         if self.input == 'cube':
+            if self.mpi:
+                # get MPI info "by hand" for now
+                # eventually MPI bookkeeping will be integrated in to xgutil.backend
+                from mpi4py import MPI
+                comm = MPI.COMM_WORLD
+                rank  = comm.Get_rank()
+                nproc = comm.Get_size()
+            else:
+                rank  = 0
+                nproc = 1
             cube = self.cube
             self.displacements = {}
             self.displacements['type']  = 'arraylist'
-            self.displacements['data']  = [cube.s1x,cube.s1y,cube.s1z,cube.s2x,cube.s2y,cube.s2z]
+            self.displacements['data']  = [cube.s1x.flatten(),
+                                           cube.s1y.flatten(),
+                                           cube.s1z.flatten(),
+                                           cube.s2x.flatten(),
+                                           cube.s2y.flatten(),
+                                           cube.s2z.flatten()]
+
             # store the location of local cube data within the global cube here, using the MPI rank information
             # currently set here to y-direction sharding as is the case for sharded exgalsky FFTs, assuming
             # one GPU per MPI rank
@@ -61,8 +75,8 @@ class FieldSky:
             self.displacements['stop']  = {}
             self.displacements['start']['x'] = 0
             self.displacements['stop']['x']  = self.N
-            self.displacements['start']['y'] = self.N//self.nproc*self.rank
-            self.displacements['stop']['y']  = self.N//self.nproc*(self.rank+1)
+            self.displacements['start']['y'] = self.N//nproc*rank
+            self.displacements['stop']['y']  = self.N//nproc*(rank+1)
             self.displacements['start']['z'] = 0
             self.displacements['stop']['z']  = self.N
 
@@ -95,7 +109,7 @@ class FieldSky:
 
         kappa_map_filebase = './output/kappa_'+self.ID+f'-{ grid_nside }_nside-{ map_nside }'
 
-        backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-logging.ERROR)
+        backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-self.loglev)
         backend.print2log(log, f"Backend configuration complete.", level='usky_info')
 
         if self.input == 'lptfiles':

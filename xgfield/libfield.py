@@ -95,6 +95,9 @@ class LibField():
         zaxis = jnp.arange(grid_zstarts, grid_zstops, dtype=jnp.int16)
         times = _profiletime(task_tag, 'slab grid axis setup', times)
 
+        log.usky_info(f"grid_xstarts, grid_xstops, grid_ystarts, grid_ystops, grid_zstarts, grid_zstops:"+
+                     f"\n    {grid_xstarts}, {grid_xstops}, {grid_ystarts}, {grid_ystops}, {grid_zstarts}, {grid_zstops}")
+
         skymap = jnp.zeros((self.npix,))
         times = _profiletime(task_tag, 'skymap init', times)
 
@@ -271,8 +274,6 @@ class LibField():
                 tmap  += dtmap
                 tread_bar = tread / i
                 tmap_bar  = tmap  / i
-                log.usky_info(f"{task_tag}: for iteration {i}/{n}: IO , mapping = {dtread:.3f} , {dtmap:.3f} (mean = {tread_bar:.3f} , {tmap_bar:.3f}; " +
-                              f"total = {tread:.3f} , {tmap:.3f})")
 
         return backend.mpi_backend.reduce2map(obs_map)
     
