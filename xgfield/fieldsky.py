@@ -95,8 +95,6 @@ class FieldSky:
 
         kappa_map_filebase = './output/kappa_'+self.ID+f'-{ grid_nside }_nside-{ map_nside }'
 
-        from xgutil.log_util import parprint
-        parprint(f"force_no_mpi is {force_no_mpi}; force_no_gpu is {force_no_gpu}")
         backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-logging.ERROR)
         backend.print2log(log, f"Backend configuration complete.", level='usky_info')
 
