@@ -1,5 +1,9 @@
-def _get_websky_displacements():
-    # Websky displacement fields
+def _get_lpt_displacement_files(backend,N):
+    import logging
+    import os
+    log = logging.getLogger("LIGHTCONE")
+
+    # only websky displacement fields are implemented
     try:
         path2disp = os.environ['LPT_DISPLACEMENTS_PATH']
     except:
@@ -7,7 +11,7 @@ def _get_websky_displacements():
 
     backend.print2log(log, f"Path to displacement files set to {path2disp}", level='usky_info')
 
-    if grid_nside == 768:
+    if N == 768:
         sxfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16_no768'
         syfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16_no768'
         szfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16_no768'
@@ -27,30 +31,40 @@ class FieldSky:
     def __init__(self, **kwargs):
 
         import xgfield.defaults as fd
+
         self.ID    = kwargs.get(    'ID',fd.ID)
         self.N     = kwargs.get(     'N',fd.N)
         self.Lbox  = kwargs.get(  'Lbox',fd.Lbox)
         self.Nside = kwargs.get( 'Nside',fd.Nside)
         self.input = kwargs.get( 'input',fd.input)
-        self.nproc = kwargs.get( 'nproc',1)
-        self.rank  = kwargs.get(  'rank',0)
+        self.gpu   = kwargs.get(   'gpu',fd.gpu)
+        self.mpi   = kwargs.get(   'mpi',fd.mpi)
 
-        self.cube  = kwargs.get(  'cube')
+        self.nproc  = kwargs.get( 'nproc',1)
+        self.rank   = kwargs.get(  'rank',0)
+        self.cube   = kwargs.get(  'cube')
+
         if self.cube is not None:
             self.input = 'cube'
             self.N    = self.cube.N
             self.Lbox = self.cube.Lbox
 
-        if self.input == 'websky':
-            self.displacements = _get_websky_displacements()
-        elif self.input == 'cube':
+        if self.input == 'cube':
+            cube = self.cube
             self.displacements = {}
             self.displacements['type']  = 'arraylist'
             self.displacements['data']  = [cube.s1x,cube.s1y,cube.s1z,cube.s2x,cube.s2y,cube.s2z]
-            self.displacements['start'] = (     0,self.N//nproc*rank,         0)
-            self.displacements['end']   = (self.N,self.N//nproc*(rank+1),self.N)
-
-         return
+            # store the location of local cube data within the global cube here, using the MPI rank information
+            # currently set here to y-direction sharding as is the case for sharded exgalsky FFTs, assuming
+            # one GPU per MPI rank
+            self.displacements['start'] = {}
+            self.displacements['stop']  = {}
+            self.displacements['start']['x'] = 0
+            self.displacements['stop']['x']  = self.N
+            self.displacements['start']['y'] = self.N//self.nproc*self.rank
+            self.displacements['stop']['y']  = self.N//self.nproc*(self.rank+1)
+            self.displacements['start']['z'] = 0
+            self.displacements['stop']['z']  = self.N
 
     def generate(self, **kwargs):
 
@@ -76,13 +90,18 @@ class FieldSky:
         zmin                  = 0.05  # minimum redshift for projection (=0.05 for websky products)
         zmax                  = 4.5   # maximum redshift for projection (=4.50 for websky products)
 
-        force_no_mpi          = False 
-        force_no_gpu          = False
+        force_no_mpi          = not self.mpi
+        force_no_gpu          = not self.gpu
 
-        kappa_map_filebase = f'./output/kappa_1lpt_grid-{ grid_nside }_nside-{ map_nside }'
+        kappa_map_filebase = './output/kappa_'+self.ID+f'-{ grid_nside }_nside-{ map_nside }'
 
+        from xgutil.log_util import parprint
+        parprint(f"force_no_mpi is {force_no_mpi}; force_no_gpu is {force_no_gpu}")
         backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-logging.ERROR)
         backend.print2log(log, f"Backend configuration complete.", level='usky_info')
+
+        if self.input == 'lptfiles':
+            self.displacements = _get_lpt_displacement_files(backend, grid_nside)
 
         backend.print2log(log, f"Computing cosmology...", level='usky_info')
         cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68) # for background expansion consistent with websky

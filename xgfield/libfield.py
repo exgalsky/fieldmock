@@ -233,6 +233,15 @@ class LibField():
                 sx = _read_displacement(displacements['data'][0], shape, offset)
                 sy = _read_displacement(displacements['data'][1], shape, offset)
                 sz = _read_displacement(displacements['data'][2], shape, offset)
+                startx = iter['start'] ; stopx = iter['stop']
+                starty = 0             ; stopy = self.grid_nside
+                startz = 0             ; stopz = self.grid_nside
+            elif displacements['type'] == 'arraylist':
+                # for array list of displacements, domain decomposition already done (currently with jax sharding)
+                # and encoded in the iterator from displacements['start']['x'], etc.
+                startx = iter['start']['x'] ; stopx = iter['stop']['x']
+                starty = iter['start']['y'] ; stopy = iter['stop']['y']
+                startz = iter['start']['z'] ; stopz = iter['stop']['z']
 
             if not use_tqdm:
                 t2=time()
@@ -242,7 +251,7 @@ class LibField():
             sx = jnp.asarray(sx) ; sy = jnp.asarray(sy) ; sz = jnp.asarray(sz)
             times = _profiletime(task_tag, 'numpy to jax sx, sy, sz', times)
 
-            obs_map_cur = self.grid2map(sx, sy, sz, start, stop, 0, self.grid_nside, 0, self.grid_nside, backend=backend)
+            obs_map_cur = self.grid2map(sx, sy, sz, startx, stopx, starty, stopy, startz, stopz, backend=backend)
             times = _profiletime(task_tag, 'grid2map in fieldmap', times)
 
             obs_map_cur = np.array(obs_map_cur, dtype=np.float32)

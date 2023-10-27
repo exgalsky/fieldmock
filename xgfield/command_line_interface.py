@@ -13,20 +13,23 @@ def main():
 
     parser = argparse.ArgumentParser(description='Commandline interface to fieldmock')
 
-    parser.add_argument('modelID', type=str)
-    parser.add_argument('--N',     type=int, help=f'grid dimension [default = {fmd.N}]',     default=fmd.N)
-    parser.add_argument('--Lbox',  type=int, help=f'box size in Mpc [default = {fmd.Lbox}]', default=fmd.Lbox)
-    parser.add_argument('--Nside', type=int, help=f'healpix Nside [default = {fmd.Nside}]',  default=fmd.Nside)
-    parser.add_argument('--input', type=str, help=f'field input [default = {fmd.input}]',    default=fmd.input)
+    parser.add_argument('ID',                         help=f'model ID [{fmd.ID}]',          type=str)
+    parser.add_argument('--N',     default=fmd.N,     help=f'grid dimension [{fmd.N}]',     type=int)
+    parser.add_argument('--Lbox',  default=fmd.Lbox,  help=f'box size in Mpc [{fmd.Lbox}]', type=int)
+    parser.add_argument('--Nside', default=fmd.Nside, help=f'healpix Nside [{fmd.Nside}]',  type=int)
+    parser.add_argument('--input', default=fmd.input, help=f'field input [{fmd.input}]',    type=str)
+    parser.add_argument('--gpu',   default=fmd.gpu,   help=f'use GPU [{fmd.gpu}]', action=argparse.BooleanOptionalAction)
+    parser.add_argument('--mpi',   default=fmd.mpi,   help=f'use MPI [{fmd.mpi}]', action=argparse.BooleanOptionalAction)
+
     args = parser.parse_args()
 
-    ID    = args.modelID
-    N     = args.N
-    Lbox  = args.Lbox
-    Nside = args.Nside
-    input = args.input
-
-    sky = fieldsky.FieldSky(ID=ID,N=N,Lbox=Lbox,Nside=Nside,input=input)
+    sky = fieldsky.FieldSky(ID    = args.ID,
+                            N     = args.N,
+                            Lbox  = args.Lbox,
+                            Nside = args.Nside,
+                            input = args.input,
+                            gpu   = args.gpu,
+                            mpi   = args.mpi)
 
     return sky.generate()
 
