@@ -5,4 +5,3 @@ output
 *.ipynb
 build
 *egg-info
-.gitignore
