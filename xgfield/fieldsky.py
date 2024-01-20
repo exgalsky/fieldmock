@@ -32,14 +32,15 @@ class FieldSky:
 
         import xgfield.defaults as fd
 
-        self.ID     = kwargs.get(     'ID',fd.ID)
-        self.N      = kwargs.get(      'N',fd.N)
-        self.Lbox   = kwargs.get(   'Lbox',fd.Lbox)
-        self.Nside  = kwargs.get(  'Nside',fd.Nside)
-        self.input  = kwargs.get(  'input',fd.input)
-        self.gpu    = kwargs.get(    'gpu',fd.gpu)
-        self.mpi    = kwargs.get(    'mpi',fd.mpi)
-        self.loglev = kwargs.get( 'loglev',fd.loglev)
+        self.ID      = kwargs.get(     'ID',fd.ID)
+        self.N       = kwargs.get(      'N',fd.N)
+        self.Lbox    = kwargs.get(   'Lbox',fd.Lbox)
+        self.Nside   = kwargs.get(  'Nside',fd.Nside)
+        self.input   = kwargs.get(  'input',fd.input)
+        self.gpu     = kwargs.get(    'gpu',fd.gpu)
+        self.mpi     = kwargs.get(    'mpi',fd.mpi)
+        self.loglev  = kwargs.get( 'loglev',fd.loglev)
+        self.backend = kwargs.get('backend',fd.backend)
 
         self.cube  = kwargs.get(  'cube')
         if self.cube is not None:
@@ -109,8 +110,11 @@ class FieldSky:
 
         kappa_map_filebase = './output/kappa_'+self.ID+f'-{ grid_nside }_nside-{ map_nside }'
 
-        backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-self.loglev)
-        backend.print2log(log, f"Backend configuration complete.", level='usky_info')
+        if self.backend is None:
+            backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-self.loglev)
+            backend.print2log(log, f"Backend configuration complete.", level='usky_info')
+        else:
+            backend = self.backend
 
         if self.input == 'lptfiles':
             self.displacements = _get_lpt_displacement_files(backend, grid_nside)
