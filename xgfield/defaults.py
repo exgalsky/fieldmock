@@ -8,4 +8,4 @@ input   = "lptfiles"
 gpu     = True
 mpi     = True
 loglev  = logging.ERROR # xgfield logging uses standard levels from logging module
-backend = None
+cwsp    = None
