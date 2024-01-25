@@ -12,17 +12,25 @@ def _get_lpt_displacement_files(backend,N):
     backend.print2log(log, f"Path to displacement files set to {path2disp}", level='usky_info')
 
     if N == 768:
-        sxfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16_no768'
-        syfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16_no768'
-        szfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16_no768'
+        s1xfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16_no768'
+        s1yfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16_no768'
+        s1zfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16_no768'
+
+        s2xfile = path2disp+'sx2_7700Mpc_n6144_nb30_nt16_no768'
+        s2yfile = path2disp+'sy2_7700Mpc_n6144_nb30_nt16_no768'
+        s2zfile = path2disp+'sz2_7700Mpc_n6144_nb30_nt16_no768'
     else:
-        sxfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16'
-        syfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16'
-        szfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16'
+        s1xfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16'
+        s1yfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16'
+        s1zfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16'
+
+        s2xfile = path2disp+'sx2_7700Mpc_n6144_nb30_nt16'
+        s2yfile = path2disp+'sy2_7700Mpc_n6144_nb30_nt16'
+        s2zfile = path2disp+'sz2_7700Mpc_n6144_nb30_nt16'
 
     displacements = {}
     displacements['type'] = 'filelist'
-    displacements['data'] = [sxfile, syfile, szfile]
+    displacements['data'] = [s1xfile, s1yfile, s1zfile, s2xfile, s2yfile, s2zfile]
 
     return displacements
 

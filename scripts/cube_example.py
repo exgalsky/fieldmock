@@ -39,9 +39,10 @@ if parallel:
 cube.s1x = convert(np.reshape(np.fromfile(path2disp+'sx1_7700Mpc_n6144_nb30_nt16_no768',dtype=np.float32),(N,N,N)))[:,starty:stopy,:]
 cube.s1y = convert(np.reshape(np.fromfile(path2disp+'sy1_7700Mpc_n6144_nb30_nt16_no768',dtype=np.float32),(N,N,N)))[:,starty:stopy,:]
 cube.s1z = convert(np.reshape(np.fromfile(path2disp+'sz1_7700Mpc_n6144_nb30_nt16_no768',dtype=np.float32),(N,N,N)))[:,starty:stopy,:]
-cube.s2x = cube.s1x * 0.
-cube.s2y = cube.s1x * 0.
-cube.s2z = cube.s1x * 0.
+
+cube.s2x = convert(np.reshape(np.fromfile(path2disp+'sx2_7700Mpc_n6144_nb30_nt16_no768',dtype=np.float32),(N,N,N)))[:,starty:stopy,:]
+cube.s2y = convert(np.reshape(np.fromfile(path2disp+'sy2_7700Mpc_n6144_nb30_nt16_no768',dtype=np.float32),(N,N,N)))[:,starty:stopy,:]
+cube.s2z = convert(np.reshape(np.fromfile(path2disp+'sz2_7700Mpc_n6144_nb30_nt16_no768',dtype=np.float32),(N,N,N)))[:,starty:stopy,:]
 
 sky = fieldsky.FieldSky(ID    = ID,
                         N     = N,
