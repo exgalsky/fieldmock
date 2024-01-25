@@ -32,14 +32,15 @@ class FieldSky:
 
         import xgfield.defaults as fd
 
-        self.ID     = kwargs.get(     'ID',fd.ID)
-        self.N      = kwargs.get(      'N',fd.N)
-        self.Lbox   = kwargs.get(   'Lbox',fd.Lbox)
-        self.Nside  = kwargs.get(  'Nside',fd.Nside)
-        self.input  = kwargs.get(  'input',fd.input)
-        self.gpu    = kwargs.get(    'gpu',fd.gpu)
-        self.mpi    = kwargs.get(    'mpi',fd.mpi)
-        self.loglev = kwargs.get( 'loglev',fd.loglev)
+        self.ID      = kwargs.get(     'ID',fd.ID)
+        self.N       = kwargs.get(      'N',fd.N)
+        self.Lbox    = kwargs.get(   'Lbox',fd.Lbox)
+        self.Nside   = kwargs.get(  'Nside',fd.Nside)
+        self.input   = kwargs.get(  'input',fd.input)
+        self.gpu     = kwargs.get(    'gpu',fd.gpu)
+        self.mpi     = kwargs.get(    'mpi',fd.mpi)
+        self.loglev  = kwargs.get( 'loglev',fd.loglev)
+        self.cwsp    = kwargs.get('backend',fd.cwsp)
 
         self.cube  = kwargs.get(  'cube')
         if self.cube is not None:
@@ -112,12 +113,15 @@ class FieldSky:
         backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-self.loglev)
         backend.print2log(log, f"Backend configuration complete.", level='usky_info')
 
+        if self.cwsp == None:
+            backend.print2log(log, f"Computing cosmology...", level='usky_info')
+            cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68) # for background expansion consistent with websky
+            backend.print2log(log, f"Cosmology computed", level='usky_info')
+        else:
+            cosmo_wsp = self.cwsp
+
         if self.input == 'lptfiles':
             self.displacements = _get_lpt_displacement_files(backend, grid_nside)
-
-        backend.print2log(log, f"Computing cosmology...", level='usky_info')
-        cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68) # for background expansion consistent with websky
-        backend.print2log(log, f"Cosmology computed", level='usky_info')
 
         backend.print2log(log, f"Setting up lightcone workspace...", level='usky_info')
         lpt_wsp = lfm.LibField(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
