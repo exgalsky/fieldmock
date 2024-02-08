@@ -50,6 +50,7 @@ class FieldSky:
         self.loglev = kwargs.get(  'loglev',fd.loglev)
         self.is64bit= kwargs.get( 'is64bit',fd.is64bit)
         self.peak_per_cell_memory_in_MB = kwargs.get( 'peak_per_cell_memory_in_MB',fd.peak_per_cell_memory_in_MB)
+        self.cwsp    = kwargs.get('backend',fd.cwsp)
 
         self.cube  = kwargs.get(  'cube')
         if self.cube is not None:
@@ -122,14 +123,24 @@ class FieldSky:
         backend = bk.Backend(force_no_mpi=force_no_mpi, force_no_gpu=force_no_gpu,logging_level=-self.loglev)
         backend.print2log(log, f"Backend configuration complete.", level='usky_info')
 
+        if self.cwsp == None:
+            backend.print2log(log, f"Computing cosmology...", level='usky_info')
+            cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68) # for background expansion consistent with websky
+            backend.print2log(log, f"Cosmology computed", level='usky_info')
+        else:
+            cosmo_wsp = self.cwsp
+
         if self.input == 'lptfiles':
             self.displacements = _get_lpt_displacement_files(backend, grid_nside)
 
-        backend.print2log(log, f"Computing cosmology...", level='usky_info')
-        cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68, cosmo_backend='CAMB') # for background expansion consistent with websky
-        backend.print2log(log, f"Cosmology computed", level='usky_info')
+        if self.cwsp == None:
+            backend.print2log(log, f"Computing cosmology...", level='usky_info')
+            cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68) # for background expansion consistent with websky
+            backend.print2log(log, f"Cosmology computed", level='usky_info')
+        else:
+            cosmo_wsp = self.cwsp
 
-        backend.print2log(log, f"Setting up lightcone workspace...", level='usky_info')
+            backend.print2log(log, f"Setting up lightcone workspace...", level='usky_info')
         lpt_wsp = lfm.LibField(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
 
         backend.print2log(log, f"Computing LPT to kappa map...", level='usky_info')
