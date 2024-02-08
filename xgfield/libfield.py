@@ -202,18 +202,20 @@ class LibField():
 
         return skymap
     
-    def fieldmap(self, displacements, backend, bytes_per_cell=4, use_tqdm=False):        #kernel_list,
-
+    def fieldmap(self, displacements, backend, is64bit=False, use_tqdm=False, peak_per_cell_memory_in_MB = 200.0, jax_overhead_factor  = 1.5):        #kernel_list,
+        
         import jax
         import jax.numpy as jnp
         import numpy as np
         from time import time
 
         data_shape = (self.grid_nside, self.grid_nside, self.grid_nside)
-        # HARDCODED PARAMETERS -- NEED TO DOCUMENT AND IMPLEMENT USER SETTING AT RUNTIME
-        peak_per_cell_memory = 150.0
-        jax_overhead_factor  = 1.5
-        backend.datastream_setup(data_shape, bytes_per_cell, peak_per_cell_memory, jax_overhead_factor, decom_type='slab', divide_axis=0)
+        bytes_per_cell_of_data = 4.
+        if is64bit: bytes_per_cell_of_data = 8.
+
+        # print(is64bit, bytes_per_cell_of_data, peak_per_cell_memory_in_MB)
+
+        backend.datastream_setup(data_shape, bytes_per_cell_of_data, peak_per_cell_memory_in_MB, jax_overhead_factor, decom_type='slab', divide_axis=0)
         jax_iterator = backend.get_iterator()
         obs_map = np.zeros((self.npix,))
         task_tag = backend.jax_backend.task_tag

@@ -40,14 +40,16 @@ class FieldSky:
 
         import xgfield.defaults as fd
 
-        self.ID     = kwargs.get(     'ID',fd.ID)
-        self.N      = kwargs.get(      'N',fd.N)
-        self.Lbox   = kwargs.get(   'Lbox',fd.Lbox)
-        self.Nside  = kwargs.get(  'Nside',fd.Nside)
-        self.input  = kwargs.get(  'input',fd.input)
-        self.gpu    = kwargs.get(    'gpu',fd.gpu)
-        self.mpi    = kwargs.get(    'mpi',fd.mpi)
-        self.loglev = kwargs.get( 'loglev',fd.loglev)
+        self.ID     = kwargs.get(      'ID',fd.ID)
+        self.N      = kwargs.get(       'N',fd.N)
+        self.Lbox   = kwargs.get(    'Lbox',fd.Lbox)
+        self.Nside  = kwargs.get(   'Nside',fd.Nside)
+        self.input  = kwargs.get(   'input',fd.input)
+        self.gpu    = kwargs.get(     'gpu',fd.gpu)
+        self.mpi    = kwargs.get(     'mpi',fd.mpi)
+        self.loglev = kwargs.get(  'loglev',fd.loglev)
+        self.is64bit= kwargs.get( 'is64bit',fd.is64bit)
+        self.peak_per_cell_memory_in_MB = kwargs.get( 'peak_per_cell_memory_in_MB',fd.peak_per_cell_memory_in_MB)
 
         self.cube  = kwargs.get(  'cube')
         if self.cube is not None:
@@ -124,14 +126,14 @@ class FieldSky:
             self.displacements = _get_lpt_displacement_files(backend, grid_nside)
 
         backend.print2log(log, f"Computing cosmology...", level='usky_info')
-        cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68) # for background expansion consistent with websky
+        cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68, cosmo_backend='CAMB') # for background expansion consistent with websky
         backend.print2log(log, f"Cosmology computed", level='usky_info')
 
         backend.print2log(log, f"Setting up lightcone workspace...", level='usky_info')
         lpt_wsp = lfm.LibField(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
 
         backend.print2log(log, f"Computing LPT to kappa map...", level='usky_info')
-        kappa_map = lpt_wsp.fieldmap(self.displacements, backend, bytes_per_cell=4)
+        kappa_map = lpt_wsp.fieldmap(self.displacements, backend, is64bit=self.is64bit, peak_per_cell_memory_in_MB=self.peak_per_cell_memory_in_MB)
         backend.print2log(log, f"Kappa map computed. Saving to file.", level='usky_info')
 
         backend.mpi_backend.writemap2file(kappa_map, kappa_map_filebase+".fits")
