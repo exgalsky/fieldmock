@@ -12,17 +12,25 @@ def _get_lpt_displacement_files(backend,N):
     backend.print2log(log, f"Path to displacement files set to {path2disp}", level='usky_info')
 
     if N == 768:
-        sxfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16_no768'
-        syfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16_no768'
-        szfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16_no768'
+        s1xfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16_no768'
+        s1yfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16_no768'
+        s1zfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16_no768'
+
+        s2xfile = path2disp+'sx2_7700Mpc_n6144_nb30_nt16_no768'
+        s2yfile = path2disp+'sy2_7700Mpc_n6144_nb30_nt16_no768'
+        s2zfile = path2disp+'sz2_7700Mpc_n6144_nb30_nt16_no768'
     else:
-        sxfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16'
-        syfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16'
-        szfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16'
+        s1xfile = path2disp+'sx1_7700Mpc_n6144_nb30_nt16'
+        s1yfile = path2disp+'sy1_7700Mpc_n6144_nb30_nt16'
+        s1zfile = path2disp+'sz1_7700Mpc_n6144_nb30_nt16'
+
+        s2xfile = path2disp+'sx2_7700Mpc_n6144_nb30_nt16'
+        s2yfile = path2disp+'sy2_7700Mpc_n6144_nb30_nt16'
+        s2zfile = path2disp+'sz2_7700Mpc_n6144_nb30_nt16'
 
     displacements = {}
     displacements['type'] = 'filelist'
-    displacements['data'] = [sxfile, syfile, szfile]
+    displacements['data'] = [s1xfile, s1yfile, s1zfile, s2xfile, s2yfile, s2zfile]
 
     return displacements
 
@@ -32,14 +40,17 @@ class FieldSky:
 
         import xgfield.defaults as fd
 
-        self.ID      = kwargs.get(     'ID',fd.ID)
-        self.N       = kwargs.get(      'N',fd.N)
-        self.Lbox    = kwargs.get(   'Lbox',fd.Lbox)
-        self.Nside   = kwargs.get(  'Nside',fd.Nside)
-        self.input   = kwargs.get(  'input',fd.input)
-        self.gpu     = kwargs.get(    'gpu',fd.gpu)
-        self.mpi     = kwargs.get(    'mpi',fd.mpi)
-        self.loglev  = kwargs.get( 'loglev',fd.loglev)
+        self.ID     = kwargs.get(      'ID',fd.ID)
+        self.N      = kwargs.get(       'N',fd.N)
+        self.Lbox   = kwargs.get(    'Lbox',fd.Lbox)
+        self.Nside  = kwargs.get(   'Nside',fd.Nside)
+        self.input  = kwargs.get(   'input',fd.input)
+        self.nlpt   = kwargs.get(    'nlpt',fd.nlpt)
+        self.gpu    = kwargs.get(     'gpu',fd.gpu)
+        self.mpi    = kwargs.get(     'mpi',fd.mpi)
+        self.loglev = kwargs.get(  'loglev',fd.loglev)
+        self.is64bit= kwargs.get( 'is64bit',fd.is64bit)
+        self.peak_per_cell_memory_in_MB = kwargs.get( 'peak_per_cell_memory_in_MB',fd.peak_per_cell_memory_in_MB)
         self.cwsp    = kwargs.get('backend',fd.cwsp)
 
         self.cube  = kwargs.get(  'cube')
@@ -123,14 +134,21 @@ class FieldSky:
         if self.input == 'lptfiles':
             self.displacements = _get_lpt_displacement_files(backend, grid_nside)
 
-        backend.print2log(log, f"Setting up lightcone workspace...", level='usky_info')
+        if self.cwsp == None:
+            backend.print2log(log, f"Computing cosmology...", level='usky_info')
+            cosmo_wsp = cosmo.cosmology(backend, Omega_m=0.31, h=0.68) # for background expansion consistent with websky
+            backend.print2log(log, f"Cosmology computed", level='usky_info')
+        else:
+            cosmo_wsp = self.cwsp
+
+            backend.print2log(log, f"Setting up lightcone workspace...", level='usky_info')
         lpt_wsp = lfm.LibField(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
 
         backend.print2log(log, f"Computing LPT to kappa map...", level='usky_info')
-        kappa_map = lpt_wsp.fieldmap(self.displacements, backend, bytes_per_cell=4)
+        kappa_map = lpt_wsp.fieldmap(self.displacements, backend, nlpt=self.nlpt, is64bit=self.is64bit, peak_per_cell_memory_in_MB=self.peak_per_cell_memory_in_MB)
         backend.print2log(log, f"Kappa map computed. Saving to file.", level='usky_info')
 
-        backend.mpi_backend.writemap2file(kappa_map, kappa_map_filebase+".fits")
+        backend.mpi_backend.writemap2file(kappa_map, f"{kappa_map_filebase}_{self.nlpt}LPT.fits")
         backend.print2log(log, f"LIGHTCONE: Kappa map saved. Exiting...", level='usky_info')
 
         return 0

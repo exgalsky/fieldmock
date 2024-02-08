@@ -1,7 +1,7 @@
 from setuptools import setup
 pname='xgfield'
 setup(name=pname,
-      version='0.1',
+      version='0.2',
       description='Mocks from field representation of LSS along the light cone',
       url='http://github.com/exgalsky/xgfield',
       author='exgalsky collaboration',
