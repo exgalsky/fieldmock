@@ -268,9 +268,10 @@ class LibField():
                 s1y = _read_displacement(displacements['data'][1], shape, offset)
                 s1z = _read_displacement(displacements['data'][2], shape, offset)
 
-                s2x = _read_displacement(displacements['data'][3], shape, offset)
-                s2y = _read_displacement(displacements['data'][4], shape, offset)
-                s2z = _read_displacement(displacements['data'][5], shape, offset)
+                if nlpt == 2:
+                    s2x = _read_displacement(displacements['data'][3], shape, offset)
+                    s2y = _read_displacement(displacements['data'][4], shape, offset)
+                    s2z = _read_displacement(displacements['data'][5], shape, offset)
 
                 startx = iter['start'] ; stopx = iter['stop']
                 starty = 0             ; stopy = self.grid_nside
