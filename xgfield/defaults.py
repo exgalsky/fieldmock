@@ -4,6 +4,7 @@ ID      = "FieldDefaultID"
 N       = 768
 Lbox    = 7700.
 Nside   = 1024
+nlpt    = 2
 input   = "lptfiles"
 gpu     = True
 mpi     = True

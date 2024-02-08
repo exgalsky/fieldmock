@@ -70,7 +70,7 @@ class LibField():
             return (q_i + growth_i * s1_i + (3/7*Omega_m**(-1/143)*growth_i**2.) * s2_i)
         self.euclid_i = euclid_i
 
-    def grid2map(self, s1x, s1y, s1z, s2x, s2y, s2z, grid_xstarts, grid_xstops, grid_ystarts, grid_ystops, grid_zstarts, grid_zstops, backend=None):
+    def grid2map(self, s1x, s1y, s1z, s2x, s2y, s2z, grid_xstarts, grid_xstops, grid_ystarts, grid_ystops, grid_zstarts, grid_zstops, nlpt, backend=None):
 
         import jax
         import jax.numpy as jnp
@@ -153,21 +153,28 @@ class LibField():
             times = _profiletime(task_tag, 'growth', times)
 
             # Eulerian x coordinate
-            Xx = jax.vmap(self.euclid_i, in_axes=(0, 0, 0, 0, None), out_axes=0)(qx, s1x, s2x, growth, Omega_m)
+            if nlpt == 1: Xx = jax.vmap(self.euclid_i, in_axes=(0, 0, None, 0, None), out_axes=0)(qx, s1x, 0., growth, Omega_m)
+            if nlpt == 2: Xx = jax.vmap(self.euclid_i, in_axes=(0, 0, 0, 0, None), out_axes=0)(qx, s1x, s2x, growth, Omega_m)
+                
             times = _profiletime(task_tag, 'Xx', times)
 
             del qx
             times = _profiletime(task_tag, 'qx delete', times)
 
             # Eulerian y coordinate
-            Xy = jax.vmap(self.euclid_i, in_axes=(0, 0, 0, 0, None), out_axes=0)(qy, s1y, s2y, growth, Omega_m)
+            if nlpt == 1: Xy = jax.vmap(self.euclid_i, in_axes=(0, 0, None, 0, None), out_axes=0)(qy, s1y, 0., growth, Omega_m)
+            if nlpt == 2: Xy = jax.vmap(self.euclid_i, in_axes=(0, 0, 0, 0, None), out_axes=0)(qy, s1y, s2y, growth, Omega_m)
             times = _profiletime(task_tag, 'Xy', times)
 
             del qy
             times = _profiletime(task_tag, 'qy delete', times)
 
             # Eulerian z coordinate
-            Xz = jax.vmap(self.euclid_i, in_axes=(0, 0, 0, 0, None), out_axes=0)(qz, s1z, s2z, growth, Omega_m)
+            
+            if nlpt == 1: Xz = jax.vmap(self.euclid_i, in_axes=(0, 0, None, 0, None), out_axes=0)(qz, s1z, 0., growth, Omega_m)
+            if nlpt == 2: Xz = jax.vmap(self.euclid_i, in_axes=(0, 0, 0, 0, None), out_axes=0)(qz, s1z, s2z, growth, Omega_m)
+            
+                
             times = _profiletime(task_tag, 'Xz', times)
 
             del qz, growth
@@ -202,7 +209,7 @@ class LibField():
 
         return skymap
     
-    def fieldmap(self, displacements, backend, is64bit=False, use_tqdm=False, peak_per_cell_memory_in_MB = 200.0, jax_overhead_factor  = 1.5):        #kernel_list,
+    def fieldmap(self, displacements, backend, nlpt=2, is64bit=False, use_tqdm=False, peak_per_cell_memory_in_MB = 200.0, jax_overhead_factor  = 1.5):        #kernel_list,
         
         import jax
         import jax.numpy as jnp
@@ -226,9 +233,15 @@ class LibField():
             s1y = displacements['data'][1]
             s1z = displacements['data'][2]
 
-            s2x = displacements['data'][3]
-            s2y = displacements['data'][4]
-            s2z = displacements['data'][5]
+            if nlpt == 2:
+                s2x = displacements['data'][3]
+                s2y = displacements['data'][4]
+                s2z = displacements['data'][5]
+            else:
+                s2x = None
+                s2y = None
+                s2z = None
+
             # for array list of displacements, domain decomposition already done (currently with jax sharding)
             # redefine the iterator to one element containing stop and start in global array
             iterator = [{'start' : displacements['start'], 'stop' : displacements['stop'], 'offset' : None, 'shape' : None}]
@@ -280,7 +293,7 @@ class LibField():
             s2x = jnp.asarray(s2x) ; s2y = jnp.asarray(s2y) ; s2z = jnp.asarray(s2z)
             times = _profiletime(task_tag, 'numpy to jax s2x, s2y, s2z', times)
 
-            obs_map_cur = self.grid2map(s1x, s1y, s1z, s2x, s2y, s2z, startx, stopx, starty, stopy, startz, stopz, backend=backend)
+            obs_map_cur = self.grid2map(s1x, s1y, s1z, s2x, s2y, s2z, startx, stopx, starty, stopy, startz, stopz, nlpt, backend=backend)
             times = _profiletime(task_tag, 'grid2map in fieldmap', times)
 
             obs_map_cur = np.array(obs_map_cur, dtype=np.float32)

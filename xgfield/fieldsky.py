@@ -45,6 +45,7 @@ class FieldSky:
         self.Lbox   = kwargs.get(    'Lbox',fd.Lbox)
         self.Nside  = kwargs.get(   'Nside',fd.Nside)
         self.input  = kwargs.get(   'input',fd.input)
+        self.nlpt   = kwargs.get(    'nlpt',fd.nlpt)
         self.gpu    = kwargs.get(     'gpu',fd.gpu)
         self.mpi    = kwargs.get(     'mpi',fd.mpi)
         self.loglev = kwargs.get(  'loglev',fd.loglev)
@@ -144,10 +145,10 @@ class FieldSky:
         lpt_wsp = lfm.LibField(cosmo_wsp, grid_nside, map_nside, L_box, zmin, zmax)
 
         backend.print2log(log, f"Computing LPT to kappa map...", level='usky_info')
-        kappa_map = lpt_wsp.fieldmap(self.displacements, backend, is64bit=self.is64bit, peak_per_cell_memory_in_MB=self.peak_per_cell_memory_in_MB)
+        kappa_map = lpt_wsp.fieldmap(self.displacements, backend, nlpt=self.nlpt, is64bit=self.is64bit, peak_per_cell_memory_in_MB=self.peak_per_cell_memory_in_MB)
         backend.print2log(log, f"Kappa map computed. Saving to file.", level='usky_info')
 
-        backend.mpi_backend.writemap2file(kappa_map, kappa_map_filebase+".fits")
+        backend.mpi_backend.writemap2file(kappa_map, f"{kappa_map_filebase}_{self.nlpt}LPT.fits")
         backend.print2log(log, f"LIGHTCONE: Kappa map saved. Exiting...", level='usky_info')
 
         return 0
